@@ -11,10 +11,14 @@ services:
       - postgres
       - redis
       - mailhog
-    env_file:
-      - container.env
+    environment:
+      - DB_HOST=postgres  # networking: containers are available to each other via hostnames named after their service name
+      - DB_PASSWORD=abc123
+      - REDIS_HOST=redis
+      - EMAIL_HOST=mailhog
+      - PYTHONDONTWRITEBYTECODE=1
     volumes:
-      - ./src:/src
+      - ./src:/src  # Mounting our source and test code as volumes means we don’t need to rebuild our containers every time we make a code change.
       - ./tests:/tests
     entrypoint:
       - python
@@ -31,7 +35,7 @@ services:
       - API_HOST=api
       - FLASK_APP=allocation/entrypoints/flask_app.py
       - FLASK_DEBUG=1
-      - PYTHONUNBUFFERED=1
+      - PYTHONUNBUFFERED=1  # tells Python to not write .pyc files
     volumes:
       - ./src:/src
       - ./tests:/tests
@@ -51,9 +55,9 @@ services:
     ports:
       - "54321:5432"
 
-  redis:
+  redis:  # Inside Docker, other containers are available through hostnames named after their service name. Outside Docker, they are available on localhost, at the port defined in the ports section.
     image: redis:alpine
-    ports:
+    ports:  # The ports section allows us to expose the ports from inside the containers to the outside world —these correspond to the default ports we set in config.py.
       - "63791:6379"
 
   mailhog:
