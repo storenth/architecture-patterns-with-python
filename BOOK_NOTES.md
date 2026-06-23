@@ -9,23 +9,15 @@ The goal of the domain modeling is to started with a model that has no external 
 2. DDD is about building a good model of business domain / Event-driven to manage complexity about business domain.
 3. Domain Driven Design combines design and development practice, and shows how design and development can work together to create a better solution.
 
+## Repository, Service Layer, and Unit of Work patterns
+These three closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. We build a layer of abstraction around persistent storage, and we build a service layer to define the entrypoints to our system and capture the primary use cases.
+
 ### SOLID principles
 1. S - single responsibility: класс отвечает за конкретную работу (Square/Triangle/Circle, Output) и должна быть только одна причина для его изменения.
 2. O - open-closed: класс д/б открыт для расширения но закртыт для изменений (если расширять то без модификация самого класса - реализовать свои методы вычисления площади для классов разных фигур квадрат, круг и так далее).
 3. L - Liskov substitution: каждый производный класс может быть заменен своим родительским или базовым классом без поломки функциональности (класс Пенгвин унаследованный от Птица не должен падать при вызове метода fly следовательно нужно обеспечить дополнительный класс для не летающих птиц таких как пингвин/страус и др). Еще есть History rule: производный класс не должен изменять состояние объекта если это не заложено в родительском (ребенок-человек, но нельзя чтобы он мог летать).
 4. I - interface segregation: нет необходимости в доп полях/методах для клиента если он ими не пользуется (пульт с кнопками только для ТВ, только кондиционера и т/д)
 5. D - dependency inversion: зависимости должны строиться на абстракциях, а не на конкретных реализациях (хороший пример разделения на слои web/service/DB) см [DIP](#dependency-inversion-principle-dip)
-
-### patterns
-These closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. 
-OOD principles are the foundation for the repository and service layer patterns, which are specific architectural patterns used to organize object-oriented systems and enforce key design principles.
-
-Four key design pattern:
-- Repository pattern - a layer of abstraction around persistent storage
-- Service layer pattern - the entrypoints to our system, whether it’s a Flask/Fastapi API or a CLI.
-- Unit of Work pattern - обеспечивает атомарность ?операцям?
-- The Aggregate pattern - ?обеспечение целостности данных? A DDD aggregate is a cluster of domain objects that can be treated as a single unit. 
-
 
 
 ## Event-Driven architecture
@@ -34,7 +26,6 @@ three more mutually reinforcing patterns: the Domain Events, Message Bus, and Ha
 - Domain Events pattern - interactions with a system triggers for other interactions
 - Message bus - allow actions (interactions) to trigger Events and call appropriate Handlers
 Events can be used as a pattern for integration between services in a microservices architecture
-
 
 
 # Intro
@@ -55,12 +46,26 @@ Web/Presentation (API/CLI) --> Service/Business --> Data model is the pattern fo
 should depend on (знает о другом модуле или нуждается в нем) abstractions.
 
 Абстракции - это упрощенные интерфейсы, которые инкапсулируют поведение (подобно тому как модуль
-duckduckgo инкапсулировал API поисковой машины)
+duckduckgo инкапсулировал API поисковой машины).
 
 
 ### Domain Model pattern - место для всей бизнес логики
 Решает проблему с тем что бизнес логика (Service/Business layer) разбросана по другим слоям.
-Следовательно нужно создавать этот т/н middle layer используя Domain Model pattern
+Следовательно нужно создавать этот т/н middle layer используя Domain Model pattern.
+
+### patterns
+These closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. 
+OOD principles are the foundation for the repository and service layer patterns, which are specific architectural patterns used to organize object-oriented systems and enforce key design principles.
+
+Four key design pattern helps us to build a rich object model with persistence-ignorant code and to keep that model decoupled from technical concerns:
+
+- Repository pattern - a layer of abstraction around persistent storage
+- Service layer pattern - the entrypoints to our system, whether it’s a Flask/Fastapi API or a CLI. Also define use cases: where it begins and ends.
+- Unit of Work pattern - обеспечивает атомарность ?операцям?
+- The Aggregate pattern - ?обеспечение целостности данных? A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
+
+![component-diagram](./component-diagram-part-1.png)
+
 
 # Domain Modeling
 Бизнес говорит на языке сленга и жаргона принятого в отрасли - использует специфичные термины. Следовательно,
