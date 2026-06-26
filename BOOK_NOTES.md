@@ -68,10 +68,24 @@ Four key design pattern helps us to build a rich object model with persistence-i
 
 
 # Domain Modeling
-Бизнес говорит на языке сленга и жаргона принятого в отрасли - использует специфичные термины. Следовательно,
-Domain - это способ выражения задач бизнеса которую нужно решить в рамках конкретного процесса (закупка/дистрибьюция/склад/etc). Model - это карта процесса с полезными свойствами (property).
-Мы создаем т/н ubiquitous language как мост между business/technology 
+It answers the question: how we can model business processes with code!?
+
+a few key patterns for modeling domains: 
+- Entity
+- Value Object
+- Domain Service
+
+Мы заменяем термин business layer на термин __domain model__!
+
+Бизнес говорит на языке сленга и жаргона принятого в отрасли - использует специфичные термины. Термины и жаргоны возникают естественным образом так как это способ описать сложную систему или процесс в одно-два слова или предложения в рамках бизнес-процесса.
+
+Следовательно, Domain - это способ выражения задач бизнеса которую нужно решить в рамках конкретного процесса (закупка/дистрибьюция/склад/etc). Model - это карта процесса с полезными свойствами (property). The domain model is the mental map that business owners have of their businesses. 
+
+Мы создаем т/н _ubiquitous language_ как это мост между business/technology. Мы пользуемся терминологией чтобы упростить коммуникацию и преодолеть сложности процессов опуская детали.
 
 Модель начинается с понимания действий внутри модели в рамках ubiquitous language, в первой итерации мы создаем ключевые объекты взаимодействия: Order/OrderLine/Batch. Далее начинаем думать над валидацией входных данных через призму предложений/message:
 - Заказ должен иметь ID/SKU, quantity/qty, reference/ref
-- Не может быть одинаковых заказов в одину и туже партию/Batch 
+- Не может быть одинаковых заказов в одину и туже партию/Batch и т/д
+
+### Unit testing - TDD
+We construct a model from this business conversation!
