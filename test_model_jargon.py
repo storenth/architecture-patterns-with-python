@@ -11,13 +11,10 @@ BLUE_VASE_SKU = "BLUE_VASE"
 class TestOrder:
 
     def test_orderline_has_attributes(self):
-        order_line = OrderLine()
-        order_line.sku = RED_CHAIR_SKU
-        order_line.quantity = 1
+        order_line = OrderLine(RED_CHAIR_SKU, 1)
         print(order_line.sku)
         assert order_line.sku == RED_CHAIR_SKU
         assert order_line.quantity == 1
-
 
     def test_order_has_attributes(self):
         order = Order(ORDER_REF, RED_CHAIR=10, BLUE_SOFA=5)
@@ -29,10 +26,7 @@ class TestOrder:
 
 class TestBatch:
     def generate_order_line(self, sku, quantity):
-        order_line = OrderLine()
-        order_line.sku = sku
-        order_line.quantity = quantity
-        return order_line
+        return OrderLine(sku, quantity)
 
     def test_batch_has_orderline(self):
         batch = Batch(BATCH_REF, RED_CHAIR=50, BLUE_SOFA=10)
@@ -43,41 +37,39 @@ class TestBatch:
         assert len(batch.order_lines) == 2
 
     def test_batch_can_allocate(self):
-        order_line = self.generate_order_line(RED_CHAIR_SKU, 1)
+        line = OrderLine(RED_CHAIR_SKU, 1)
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
-        assert batch.can_allocate(order_line) is True
+        assert batch.can_allocate(line) is True
 
     def test_batch_can_not_allocate(self):
-        order_line = OrderLine()
-        order_line.sku = RED_CHAIR_SKU
-        order_line.quantity = 11
+        order_line = OrderLine(RED_CHAIR_SKU, 11)
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
         assert batch.can_allocate(order_line) is False
 
     def test_batch_not_allocate_no_line(self):
-        order_line = self.generate_order_line(RED_CHAIR_SKU, 1)
+        line = OrderLine(RED_CHAIR_SKU, 1)
         batch = Batch(BATCH_REF, BLUE_SOFA=10)
-        assert batch.can_allocate(order_line) is False
+        assert batch.can_allocate(line) is False
 
     def test_batch_can_allocate(self):
-        order_line = self.generate_order_line(RED_CHAIR_SKU, 1)
+        line = OrderLine(RED_CHAIR_SKU, 1)
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
-        assert batch.can_allocate(order_line) is True
+        assert batch.can_allocate(line) is True
 
     def test_batch_allocate_orderline(self):
-        order_line = self.generate_order_line(RED_CHAIR_SKU, 1)
+        line = OrderLine(RED_CHAIR_SKU, 1)
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
-        batch.allocate(order_line)
-        assert batch.order_lines[order_line.sku] == 9
+        batch.allocate(line)
+        assert batch.order_lines[line.sku] == 9
 
     def test_batch_can_not_allocate_orderline_twice(self):
         print("test_batch_can_not_allocate_orderline_twice")
-        order_line = self.generate_order_line(BLUE_VASE_SKU, 2)
+        line = OrderLine(BLUE_VASE_SKU, 2)
         batch = Batch(BATCH_REF, BLUE_VASE=10, BLUE_SOFA=10)
         print(batch)
-        batch.allocate(order_line)
+        batch.allocate(line)
         print(batch)
-        batch.allocate(order_line)
+        batch.allocate(line)
         print(batch)
-        assert batch.order_lines[order_line.sku] == 8
+        assert batch.order_lines[line.sku] == 8
 

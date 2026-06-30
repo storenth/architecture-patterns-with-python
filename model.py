@@ -1,6 +1,9 @@
+from dataclasses import dataclass
+
 class Product:
     sku: str
 
+@dataclass(frozen=True)
 class OrderLine:
     sku: str
     quantity: int
