@@ -89,3 +89,4 @@ a few key patterns for modeling domains:
 
 ### Unit testing - TDD
 We construct a model from this business conversation!
+Validation is about the preconditions: syntax, semantics, and pragmatics!
