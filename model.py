@@ -1,5 +1,13 @@
 from dataclasses import dataclass
 
+
+# custom exceptions
+class SameOrderLineException(Exception):
+   def __init__(self, order_line: "OrderLine"):
+       self.order_line = order_line
+   def __str__(self):
+        return 'We can not allocate the same line twice: {}'.format(self.order_line.sku)
+
 class Product:
     sku: str
 
@@ -31,7 +39,10 @@ class Batch:
     """
     def __init__(self, ref, **items):
         self.ref: str = ref
-        self.order_lines = items
+        self.order_lines: dict = items
+
+        self._customer_order_lines_map = set()
+
 
     def __repr__(self):
         return f"Batch(ref='{self.ref}', items={self.order_lines})"
@@ -43,8 +54,17 @@ class Batch:
             return True
         return False
 
+    def is_same_orderline(self, order_line: OrderLine) -> bool:
+        if order_line.sku in self._customer_order_lines_map:
+            return True
+        self._customer_order_lines_map.add(order_line.sku)
+        return False
+
+
     def allocate(self, order_line: OrderLine):
         if not self.can_allocate(order_line): return None
+        if self.is_same_orderline(order_line):
+            raise SameOrderLineException(order_line)
         print(f"Allocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.order_lines}")
         self.order_lines[order_line.sku] = self.order_lines[order_line.sku] - order_line.quantity
         print(self.order_lines[order_line.sku])

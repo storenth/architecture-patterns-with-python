@@ -25,15 +25,11 @@ class TestOrder:
         assert len(order.order_lines) == 2
 
 class TestBatch:
-    def generate_order_line(self, sku, quantity):
-        return OrderLine(sku, quantity)
-
     def test_batch_has_orderline(self):
         batch = Batch(BATCH_REF, RED_CHAIR=50, BLUE_SOFA=10)
         print(batch)
         print(batch.ref)
         print(batch.order_lines)
-
         assert len(batch.order_lines) == 2
 
     def test_batch_can_allocate(self):
@@ -62,14 +58,18 @@ class TestBatch:
         batch.allocate(line)
         assert batch.order_lines[line.sku] == 9
 
-    def test_batch_can_not_allocate_orderline_twice(self):
-        print("test_batch_can_not_allocate_orderline_twice")
-        line = OrderLine(BLUE_VASE_SKU, 2)
-        batch = Batch(BATCH_REF, BLUE_VASE=10, BLUE_SOFA=10)
-        print(batch)
+    def test_cannot_allocate_if_available_smaller_than_required(self):
+        line = OrderLine(RED_CHAIR_SKU, 99)
+        batch = Batch(BATCH_REF, RED_CHAIR=1, BLUE_SOFA=10)
         batch.allocate(line)
-        print(batch)
-        batch.allocate(line)
-        print(batch)
-        assert batch.order_lines[line.sku] == 8
+        assert batch.order_lines[line.sku] == 1
 
+    def test_batch_can_not_allocate_orderline_twice(self):
+        with pytest.raises(Exception) as excinfo:
+            line = OrderLine(BLUE_VASE_SKU, 2)
+            batch = Batch(BATCH_REF, BLUE_VASE=10, BLUE_SOFA=10)
+            print(batch)
+            batch.allocate(line)
+            print(batch)
+            batch.allocate(line)
+        assert batch.order_lines[line.sku] == 8
