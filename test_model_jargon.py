@@ -41,8 +41,8 @@ class TestBatch:
         batch = Batch(BATCH_REF, RED_CHAIR=50, BLUE_SOFA=10)
         print(batch)
         print(batch.ref)
-        print(batch.order_lines)
-        assert len(batch.order_lines) == 2
+        print(batch.purchased_lines)
+        assert len(batch.purchased_lines) == 2
 
     def test_batch_can_allocate(self):
         line = OrderLine(RED_CHAIR_SKU, 1)
@@ -68,7 +68,7 @@ class TestBatch:
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
         line = OrderLine(RED_CHAIR_SKU, 1)
         batch.allocate(line)
-        assert batch.order_lines[line.sku] == 9
+        assert batch.purchased_lines[line.sku] == 9
 
     def test_can_only_deallocate_allocated_lines(self):
         batch = Batch(BATCH_REF, RED_CHAIR=20, BLUE_SOFA=5)
@@ -76,21 +76,21 @@ class TestBatch:
         with pytest.raises(Exception) as excinfo:
             batch.deallocate(unallocated_line)
         print("excinfo: ", excinfo)
-        assert batch.order_lines["RED_CHAIR"] == 20
+        assert batch.purchased_lines["RED_CHAIR"] == 20
 
     def test_can_deallocate_allocated_lines(self):
         batch = Batch(BATCH_REF, RED_CHAIR=20, BLUE_SOFA=5)
         line = OrderLine(RED_CHAIR_SKU, 2)
         batch.allocate(line)
-        assert batch.order_lines["RED_CHAIR"] == 18
+        assert batch.purchased_lines["RED_CHAIR"] == 18
         batch.deallocate(line)
-        assert batch.order_lines["RED_CHAIR"] == 20
+        assert batch.purchased_lines["RED_CHAIR"] == 20
 
     def test_cannot_allocate_if_available_smaller_than_required(self):
         line = OrderLine(RED_CHAIR_SKU, 99)
         batch = Batch(BATCH_REF, RED_CHAIR=1, BLUE_SOFA=10)
         batch.allocate(line)
-        assert batch.order_lines[line.sku] == 1
+        assert batch.purchased_lines[line.sku] == 1
 
     def test_batch_can_not_allocate_orderline_twice(self):
         with pytest.raises(Exception) as excinfo:
@@ -100,4 +100,4 @@ class TestBatch:
             batch.allocate(line)
             print(batch)
             batch.allocate(line)
-        assert batch.order_lines[line.sku] == 8
+        assert batch.purchased_lines[line.sku] == 8
