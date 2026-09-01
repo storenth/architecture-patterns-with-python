@@ -89,4 +89,22 @@ a few key patterns for modeling domains:
 
 ### Unit testing - TDD
 We construct a model from this business conversation!
+When we can identify object by the internal data it represent/store we ca say that it is _Value Object_! So, 
+a __value object__ is any domain object that is uniquely identified by the data it holds, and dataclass helps us by providing `__eq__` mothod,
+Dataclasses Are Great for Value Objects!
+
+In fact, it’scommon to support operations on values, for example
+![math with Value objects](./value-obj-math.png)
+
+```python
+@dataclass(frozen=True)
+class Money:
+    currency
+    amount
+# Money is the Value Object
+assert Money('gbp', 10) == Money('gbp', 10)
+assert Money('gbp', 10) != Money('gbp', 15)
+```
+
+
 Validation is about the preconditions: syntax, semantics, and pragmatics!
