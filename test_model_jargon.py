@@ -1,6 +1,19 @@
 import pytest
 from model import OrderLine, Order, Batch
+from datetime import datetime, timezone
+import logging
 
+
+log = logging.getLogger(__name__)
+formatter = logging.Formatter(
+    "%(asctime)s.%(msecs)03d %(levelname)s "
+    "%(filename)s:%(lineno)s: %(message)s",
+    "%Y-%m-%d %H:%M:%S",
+)
+# Console output default: sys.stderr
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+log.addHandler(handler)
 
 ORDER_REF = "order-ref"
 BATCH_REF = "batch-ref"
@@ -9,10 +22,9 @@ BLUE_VASE_SKU = "BLUE_VASE"
 
 
 class TestOrder:
-
     def test_orderline_has_attributes(self):
         order_line = OrderLine(RED_CHAIR_SKU, 1)
-        print(order_line.sku)
+        log.debug(order_line.sku)
         assert order_line.sku == RED_CHAIR_SKU
         assert order_line.quantity == 1
 
@@ -52,11 +64,27 @@ class TestBatch:
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
         assert batch.can_allocate(line) is True
 
-    def test_batch_allocate_orderline(self):
-        line = OrderLine(RED_CHAIR_SKU, 1)
+    def test_allocating_to_a_batch_reduces_the_available_quantity(self):
         batch = Batch(BATCH_REF, RED_CHAIR=10, BLUE_SOFA=10)
+        line = OrderLine(RED_CHAIR_SKU, 1)
         batch.allocate(line)
         assert batch.order_lines[line.sku] == 9
+
+    def test_can_only_deallocate_allocated_lines(self):
+        batch = Batch(BATCH_REF, RED_CHAIR=20, BLUE_SOFA=5)
+        unallocated_line = OrderLine(RED_CHAIR_SKU, 2)
+        with pytest.raises(Exception) as excinfo:
+            batch.deallocate(unallocated_line)
+        print("excinfo: ", excinfo)
+        assert batch.order_lines["RED_CHAIR"] == 20
+
+    def test_can_deallocate_allocated_lines(self):
+        batch = Batch(BATCH_REF, RED_CHAIR=20, BLUE_SOFA=5)
+        line = OrderLine(RED_CHAIR_SKU, 2)
+        batch.allocate(line)
+        assert batch.order_lines["RED_CHAIR"] == 18
+        batch.deallocate(line)
+        assert batch.order_lines["RED_CHAIR"] == 20
 
     def test_cannot_allocate_if_available_smaller_than_required(self):
         line = OrderLine(RED_CHAIR_SKU, 99)
