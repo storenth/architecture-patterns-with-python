@@ -57,7 +57,7 @@ duckduckgo инкапсулировал API поисковой машины).
 These closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. 
 OOD principles are the foundation for the repository and service layer patterns, which are specific architectural patterns used to organize object-oriented systems and enforce key design principles.
 
-Four key design pattern helps us to build a rich object model with persistence-ignorant code and to keep that model decoupled from technical concerns:
+Four _key design patterns_ helps us to build a rich object model with persistence-ignorant code and to keep that model decoupled from technical concerns:
 
 - Repository pattern - a layer of abstraction around persistent storage
 - Service layer pattern - the entrypoints to our system, whether it’s a Flask/Fastapi API or a CLI. Also define use cases: where it begins and ends.
@@ -68,11 +68,11 @@ Four key design pattern helps us to build a rich object model with persistence-i
 
 
 # Domain Modeling
-It answers the question: how we can model business processes with code!?
+It answers the question: "how we can model business processes with code with TDD compatible way"?
 
-a few key patterns for modeling domains: 
-- Entity
-- Value Object
+use a few _key patterns_ for modeling domains: 
+- Entity: identity equality, domain object that has long-lived identity
+- Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
 - Domain Service
 
 Мы заменяем термин business layer на термин __domain model__!
@@ -83,7 +83,7 @@ a few key patterns for modeling domains:
 
 Мы создаем т/н _ubiquitous language_ как это мост между business/technology. Мы пользуемся терминологией чтобы упростить коммуникацию и преодолеть сложности процессов опуская детали.
 
-Модель начинается с понимания действий внутри модели в рамках ubiquitous language, в первой итерации мы создаем ключевые объекты взаимодействия: Order/OrderLine/Batch. Далее начинаем думать над валидацией входных данных через призму предложений/message:
+Модель начинается с понимания действий внутри модели в рамках ubiquitous language, в первой итерации мы создаем ключевые объекты взаимодействия: Order/OrderLine/Batch. Далее начинаем думать над валидацией входных данных через призму предложений/messages/jargons:
 - Заказ должен иметь ID/SKU, quantity/qty, reference/ref
 - Не может быть одинаковых заказов в одину и туже партию/Batch и т/д
 
@@ -91,7 +91,7 @@ a few key patterns for modeling domains:
 We construct a model from this business conversation!
 When we can identify object by the internal data it represent/store we ca say that it is _Value Object_! So, 
 a __value object__ is any domain object that is uniquely identified by the data it holds, and dataclass helps us by providing `__eq__` mothod,
-Dataclasses Are Great for Value Objects!
+Dataclasses Are Great for Value Objects because it is _value equality_!
 
 In fact, it’scommon to support operations on values, for example
 ![math with Value objects](./value-obj-math.png)
@@ -105,6 +105,8 @@ class Money:
 assert Money('gbp', 10) == Money('gbp', 10)
 assert Money('gbp', 10) != Money('gbp', 15)
 ```
+
+We use term _entity_ (entity pattern) to identify domain object that has long-livedidentity. So, entities unlike values have _identity equality_!
 
 
 Validation is about the preconditions: syntax, semantics, and pragmatics!
