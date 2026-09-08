@@ -29,12 +29,13 @@ class TestOrder:
         assert order_line.quantity == 1
 
     def test_order_has_attributes(self):
-        order = Order(ORDER_REF, RED_CHAIR=10, BLUE_SOFA=5)
+        order_line = OrderLine(RED_CHAIR_SKU, 1)
+        order = Order(ORDER_REF, order_line)
         print(order)
         print(order.ref)
-        print(order.order_lines)
+        print(order.order_line)
         assert order.ref == ORDER_REF
-        assert len(order.order_lines) == 2
+        assert order.order_line.quantity == 1
 
 class TestBatch:
     def test_batch_has_orderline(self):
@@ -101,3 +102,47 @@ class TestBatch:
             print(batch)
             batch.allocate(line)
         assert batch.purchased_lines[line.sku] == 8
+
+class TestBatchETA:
+    def test_prefers_warehouse_batches_to_shipments(self):
+        batch_eta = Batch(
+            BATCH_REF,
+            eta=datetime(2026, 8, 31, 15, 30, tzinfo=timezone.utc),
+            RED_CHAIR=4,
+            BLUE_SOFA=2
+        )
+        batch_warehouse = Batch(
+            BATCH_REF,
+            RED_CHAIR=5,
+            BLUE_SOFA=5
+        )
+        line = OrderLine(RED_CHAIR_SKU, 4)
+        order = Order("refOrder", line)
+        order.allocate(batch_eta, batch_warehouse)
+        assert batch_warehouse.purchased_lines[line.sku] == 1
+
+    def test_prefers_earlier_batches(self):
+        batch_eta = Batch(
+            BATCH_REF,
+            eta=datetime(2026, 10, 29, 15, 30, tzinfo=timezone.utc),
+            RED_CHAIR=5,
+            BLUE_SOFA=5
+        )
+        batch_eta_earler = Batch(
+            BATCH_REF,
+            eta=datetime(2026, 10, 20, 11, 00, tzinfo=timezone.utc),
+            RED_CHAIR=2,
+            BLUE_SOFA=2
+        )
+        batch_eta_earllest = Batch(
+            BATCH_REF,
+            eta=datetime(2026, 9, 5, 13, 45, tzinfo=timezone.utc),
+            RED_CHAIR=1,
+            BLUE_SOFA=1
+        )
+        line = OrderLine(RED_CHAIR_SKU, 1)
+        order = Order("refOrder", line)
+        order.allocate(batch_eta, batch_eta_earllest, batch_eta_earler)
+        assert batch_eta_earler.purchased_lines[line.sku] == 2
+        assert batch_eta.purchased_lines[line.sku] == 5
+        assert batch_eta_earllest.purchased_lines[line.sku] == 0

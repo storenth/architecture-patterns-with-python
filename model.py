@@ -1,6 +1,7 @@
+from __future__ import annotations
+import logging
 from dataclasses import dataclass
 from datetime import datetime
-import logging
 
 
 logger = logging.getLogger(__name__)
@@ -22,24 +23,41 @@ class Product:
     sku: str
 
 @dataclass(frozen=True)
+# the hash based on all the value attributes
 class OrderLine:
     sku: str
     quantity: int
 
-class Order():
+class Order:
     """Client create order
     Order contains multiple product lines (OrderLine)
     """
-    def __init__(self, ref, **items):
+    def __init__(self, ref, line:OrderLine):
         """
         ref: уникальный идентификатор заказа (строка или число)
         *items: dict вида {"название-товара": количество}
         """
         self.ref = ref
-        self.order_lines = items
+        self.order_line = line
+        print(f"{self.order_line=}")
 
     def __repr__(self):
-        return f"Order(ref='{self.ref}', items={self.order_lines})"
+        return f"Order(ref='{self.ref}', items={self.order_line})"
+
+    def allocate(self, *batches: "Batch"):
+        """Сначала сортируематем, далее 
+        для каждого батча проверяем есть ли нужный quantity, и
+        выделяем из партии под конкретный заказ
+        """
+        logger.debug(f"{batches=}")
+        logger.debug(f"{sorted(batches)=}")
+
+        try:
+            preferred_batch = next(b for b in sorted(batches) if b.can_allocate(self.order_line))
+            preferred_batch.allocate(self.order_line)
+            return preferred_batch.ref
+        except StopIteration:
+            raise NotAllocatedLineException(f"Out of stock {self.order_line}")
 
 
 class Batch:
@@ -62,12 +80,11 @@ class Batch:
         return f"Batch(ref='{self.ref}', items={self.purchased_lines})"
 
     def __lt__(self, batch:"Batch"):
-        logger.debug("self.eta: ", self.eta)
+        logger.debug(f"{self.eta=}")
         if self.eta is None:
             return True
         return self.eta < batch.eta
-
-
+    
     def can_allocate(self, order_line: OrderLine) -> bool:
         if order_line.quantity <= 0:
             return False
