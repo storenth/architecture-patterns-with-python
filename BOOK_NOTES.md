@@ -70,7 +70,7 @@ Four _key design patterns_ helps us to build a rich object model with persistenc
 # Domain Modeling
 It answers the question: "how we can model business processes with code with TDD compatible way"?
 
-use a few _key patterns_ for modeling domains: 
+use a few _key architecture patterns_ for modeling domains: 
 - Entity: identity equality, domain object that has long-lived identity
 - Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
 - Domain Service
@@ -88,9 +88,10 @@ use a few _key patterns_ for modeling domains:
 - Не может быть одинаковых заказов в одину и туже партию/Batch и т/д
 
 ### Unit testing - TDD
-We construct a model from this business conversation!
-When we can identify object by the internal data it represent/store we ca say that it is _Value Object_! So, 
-a __value object__ is any domain object that is uniquely identified by the data it holds, and dataclass helps us by providing `__eq__` mothod,
+We construct a model from this business conversation by using TDD approach.
+
+1. Also we need to know about __Value object pattern__: when we can identify object by the internal data it represent/store we ca say that it is _Value Object_! So, 
+a __value object__ is any domain object that is uniquely identified by the data it holds, and `dataclass` helps us by providing `__eq__` mothod internally,
 Dataclasses Are Great for Value Objects because it is _value equality_!
 
 In fact, it’scommon to support operations on values, for example
@@ -98,7 +99,13 @@ In fact, it’scommon to support operations on values, for example
 
 ```python
 @dataclass(frozen=True)
-class Money:
+class Name:
+    firstname: str
+    secondname: str
+# Name is the Value Object because if any property will changed we got new value
+assert Name("Kirill", "Zhdanov") != Name("Kirill", "Sarksyan")
+
+class Money(NamedTuple):
     currency
     amount
 # Money is the Value Object
@@ -106,7 +113,21 @@ assert Money('gbp', 10) == Money('gbp', 10)
 assert Money('gbp', 10) != Money('gbp', 15)
 ```
 
-We use term _entity_ (entity pattern) to identify domain object that has long-livedidentity. So, entities unlike values have _identity equality_!
+2. We use term _entity_ (__entity pattern__) to identify domain object that has long-lived identity. So, entities unlike values have _identity equality_!
+We can change their values, and they are still recognizably the same thing. We usually make this explicit in code by implementing equality
+operators on entities:
+
+```python
+class Batch:
+    ...
+    def __eq__(self, other):
+        if not isinstance(other, Batch):
+            return False
+        return other.reference == self.reference
+    def __hash__(self):
+        return hash(self.reference)
+```
+
 
 
 Validation is about the preconditions: syntax, semantics, and pragmatics!
