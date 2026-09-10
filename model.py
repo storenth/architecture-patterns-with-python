@@ -7,6 +7,7 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
+
 # custom exceptions
 class SameOrderLineException(Exception):
    def __init__(self, order_line: "OrderLine"):
@@ -18,6 +19,7 @@ class NotAllocatedLineException(Exception):
        self.order_line = order_line
    def __str__(self):
         return 'We can not deallocate not allocated line: {}'.format(self.order_line.sku)
+
 
 class Product:
     sku: str
@@ -68,16 +70,22 @@ class Batch:
     Batches have an ETA if they are currently shipping, or they may be in warehouse stock. We
     allocate to warehouse stock in preference to shipment batches. We allocate to shipment batches
     in order of which has the earliest ETA.
+
+    lines: соберет готовые объекты OrderLine
+    items: соберет именованные параметры типа RED_CHAIR=10
     """
-    def __init__(self, ref:str, eta:datetime|None=None, **items:OrderLine):
+    def __init__(self, ref:str, sku:str, quantity:int, eta:datetime|None=None):
         self.ref: str = ref
         self.eta = eta
-        self.purchased_lines: dict = items
+        logger.debug(f"{quantity=}")
 
-        self._customer_order_lines_map = set()
+        self.sku = sku
+        self.quantity = quantity        
+
+        self._customer_order_lines_map:set[OrderLine] = set()
 
     def __repr__(self):
-        return f"Batch(ref='{self.ref}', items={self.purchased_lines})"
+        return f"Batch(ref='{self.ref}', items={self.sku},{self.quantity}, ets={self.eta})"
 
     def __lt__(self, batch:"Batch"):
         logger.debug(f"{self.eta=}")
@@ -85,12 +93,22 @@ class Batch:
             return True
         return self.eta < batch.eta
     
+    @property
+    def allocated_quantity(self) -> int:
+        return sum(line.quantity for line in self._customer_order_lines_map)
+
+    @property
+    def available_quantity(self) -> int:
+        _available_quantity = self.quantity  - self.allocated_quantity
+        logger.debug(f"{_available_quantity=}")
+        return _available_quantity
+
     def can_allocate(self, order_line: OrderLine) -> bool:
+        logger.debug(f"{order_line.quantity=}")
+        logger.debug(f"{self.available_quantity=}")
         if order_line.quantity <= 0:
             return False
-        if self.purchased_lines.get(order_line.sku, 0) >= order_line.quantity:
-            return True
-        return False
+        return self.sku == order_line.sku and self.available_quantity >= order_line.quantity
 
     def can_deallocate(self, order_line: OrderLine) -> bool:
         if order_line.quantity <= 0: return False
@@ -108,9 +126,7 @@ class Batch:
         if not self.can_allocate(order_line): return None
         if self.is_same_orderline(order_line):
             raise SameOrderLineException(order_line)
-        print(f"Allocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.purchased_lines}")
-        self.purchased_lines[order_line.sku] = self.purchased_lines[order_line.sku] - order_line.quantity
-        print(self.purchased_lines[order_line.sku])
+        print(f"Allocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.quantity}")
         print(self._customer_order_lines_map)
 
     def deallocate(self, order_line: OrderLine):
@@ -118,7 +134,6 @@ class Batch:
         if not order_line in self._customer_order_lines_map:
             raise NotAllocatedLineException(order_line)
         if not self.can_deallocate(order_line): return None
-        print(f"Deallocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.purchased_lines}")
-        self.purchased_lines[order_line.sku] = self.purchased_lines[order_line.sku] + order_line.quantity
+        print(f"Deallocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.quantity}")
         self._customer_order_lines_map.remove(order_line)
         print(self._customer_order_lines_map)
