@@ -91,20 +91,26 @@ use a few _key architecture patterns_ for modeling domains:
 We construct a model from this business conversation by using TDD approach.
 
 1. Also we need to know about __Value object pattern__: when we can identify object by the internal data it represent/store we ca say that it is _Value Object_! So, 
-a __value object__ is any domain object that is uniquely identified by the data it holds, and `dataclass` helps us by providing `__eq__` mothod internally,
+a __value object__ is any domain object that is uniquely identified by the data it holds, and `dataclass` helps us by providing `__eq__` mothod internally (providing object comparisons),
 Dataclasses Are Great for Value Objects because it is _value equality_!
 
-In fact, it’scommon to support operations on values, for example
+In fact, it’s common to support operations on values, for example
 ![math with Value objects](./value-obj-math.png)
 
 ```python
 @dataclass(frozen=True)
+"""For value objects, the hash should be based on all the value attributes,
+and we should ensure that the objects are immutable. We get this for
+free by specifying @frozen=True on the dataclass that guarantee immutability 
+(do not need to define hash or eq methods).
+"""
 class Name:
     firstname: str
     secondname: str
 # Name is the Value Object because if any property will changed we got new value
 assert Name("Kirill", "Zhdanov") != Name("Kirill", "Sarksyan")
 
+from typing import NamedTuple
 class Money(NamedTuple):
     currency
     amount
@@ -113,18 +119,45 @@ assert Money('gbp', 10) == Money('gbp', 10)
 assert Money('gbp', 10) != Money('gbp', 15)
 ```
 
-2. We use term _entity_ (__entity pattern__) to identify domain object that has long-lived identity. So, entities unlike values have _identity equality_!
-We can change their values, and they are still recognizably the same thing. We usually make this explicit in code by implementing equality
-operators on entities:
+2. We use term _entity_ (__entity pattern__) to identify domain object that has long-lived identity. So, entities unlike values have _identity equality_ (compares identities)!
+We can change their values, and they are still recognizably the same thing. We usually make this explicit in code by implementing equality operator on entities:
 
 ```python
 class Batch:
     ...
     def __eq__(self, other):
+        """to support `==` operator on instances (define the behavior of the class for == operator)
+        By default, compares two instances by their identity – therefore instances are only equal to themselves, meaning...
+        
+        https://docs.python.org/3/reference/datamodel.html#object.__eq__
+        https://docs.python.org/3/reference/expressions.html#value-comparisons
+        https://docs.python.org/3/reference/expressions.html#is-not
+        
+        ...by default, meaning all objects compare unequal (except with themselves), so, by default, compares identities:
+            def __eq__(self, other):
+                return self is other  # Сравнивает именно id(self) == id(other)
+
+        The operators is and is not test for an object’s identity: x is y is true if and only if x and y are the same object. An Object’s identity is determined using the id() function.
+
+        https://docs.python.org/3/reference/datamodel.html#objects
+        For CPython, id(x) is the memory address where x is stored.
+        """
         if not isinstance(other, Batch):
             return False
+        # but it case of IDENTITY equality we specify wich UUID we equals by to recognize any Person as individual whatever name they holds, so that defines the entity’s unique identity over time
         return other.reference == self.reference
     def __hash__(self):
+        """This magic method Python uses to control the behavior of
+        objects when you add them to sets or use them as dict keys
+
+        https://docs.python.org/3/reference/datamodel.html#object.__hash__
+
+        The __hash__() method should return an integer. 
+        The only required property is that objects which compare equal have the same hash value.
+
+        If a class does not define an __eq__() method it should not define a __hash__() operation either; 
+        if it defines __eq__() but not __hash__(), its instances will not be usable as items in hashable collections.
+        """
         return hash(self.reference)
 ```
 
