@@ -71,9 +71,9 @@ Four _key design patterns_ helps us to build a rich object model with persistenc
 It answers the question: "how we can model business processes with code with TDD compatible way"?
 
 use a few _key architecture patterns_ for modeling domains: 
-- Entity: identity equality, domain object that has long-lived identity
-- Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
-- Domain Service
+1 Entity: identity equality, domain object that has long-lived identity
+2 Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
+3 Domain Service
 
 Мы заменяем термин business layer на термин __domain model__!
 
@@ -137,7 +137,7 @@ class Batch:
             def __eq__(self, other):
                 return self is other  # Сравнивает именно id(self) == id(other)
 
-        The operators is and is not test for an object’s identity: x is y is true if and only if x and y are the same object. An Object’s identity is determined using the id() function.
+        The operators is and is not test for an object’s identity: `x is y` is true if and only if x and y are the same object. An Object’s identity is determined using the id() function.
 
         https://docs.python.org/3/reference/datamodel.html#objects
         For CPython, id(x) is the memory address where x is stored.
@@ -146,6 +146,7 @@ class Batch:
             return False
         # but it case of IDENTITY equality we specify wich UUID we equals by to recognize any Person as individual whatever name they holds, so that defines the entity’s unique identity over time
         return other.reference == self.reference
+
     def __hash__(self):
         """This magic method Python uses to control the behavior of
         objects when you add them to sets or use them as dict keys
@@ -161,6 +162,6 @@ class Batch:
         return hash(self.reference)
 ```
 
-
+3. A Domain Service represents a business concept or process, whereas a service-layer service represents a use case for your application. Given set of batches, we need to allocate OrderLine from it!
 
 Validation is about the preconditions: syntax, semantics, and pragmatics!
