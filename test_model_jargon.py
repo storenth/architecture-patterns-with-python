@@ -1,5 +1,5 @@
 import pytest
-from model import OrderLine, Order, Batch
+from model import OrderLine, Order, Batch, OutOfStock, SameOrderLineException
 from datetime import datetime, timezone
 import logging
 
@@ -21,7 +21,7 @@ RED_CHAIR_SKU = "RED_CHAIR"
 BLUE_VASE_SKU = "BLUE_VASE"
 
 
-class TestOrder:
+class TestOrderLine:
     def test_orderline_has_attributes(self):
         order_line = OrderLine(RED_CHAIR_SKU, 1)
         log.debug(order_line.sku)
@@ -83,41 +83,116 @@ class TestBatch:
         assert batch.available_quantity == 20
 
     def test_cannot_allocate_if_available_smaller_than_required(self):
-        line = OrderLine(RED_CHAIR_SKU, 99)
         batch = Batch(BATCH_REF, "RED_CHAIR", 1)
+        line = OrderLine(RED_CHAIR_SKU, 99)
+        assert batch.can_allocate(line) is False
         batch.allocate(line)
         assert batch.available_quantity == 1
 
     def test_batch_can_not_allocate_orderline_twice(self):
-        with pytest.raises(Exception) as excinfo:
-            line = OrderLine(BLUE_VASE_SKU, 2)
-            batch = Batch(BATCH_REF, "BLUE_VASE", 10)
-            print(batch)
+        batch = Batch(BATCH_REF, "BLUE_VASE", 10)
+        line = OrderLine(BLUE_VASE_SKU, 2)
+        batch.allocate(line)
+        with pytest.raises(SameOrderLineException):
             batch.allocate(line)
-            print(batch)
-            batch.allocate(line)
+            print(f"{batch=}")
         assert batch.available_quantity == 8
+
+
+class TestOutOfStock:
+    def test_outofstock(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch = Batch(BATCH_REF, "BLUE_VASE", 1)
+        with pytest.raises(OutOfStock):
+            order.allocate(batch)
+        assert batch.available_quantity == 1
+
+    def test_outofstock_same_batch_order(self):
+        order_first = Order("refOrder1", OrderLine(BLUE_VASE_SKU, 7))
+        order_second = Order("refOrder2", OrderLine(BLUE_VASE_SKU, 10))
+        batch = Batch(BATCH_REF, "BLUE_VASE", 10)
+        order_first.allocate(batch)
+        with pytest.raises(OutOfStock):
+            order_second.allocate(batch)
+        assert batch.available_quantity == 3
+
+    def test_outofstock_two_batches(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 1)
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 5)
+        with pytest.raises(OutOfStock):
+            order.allocate(batch_1, batch_2)
+        assert batch_1.available_quantity == 1
+        assert batch_2.available_quantity == 5
+
+
+class TestSortOrder:
+    def test_available_stock_in_first_batch(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 1))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 50)
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 7)
+        order.allocate(batch_1, batch_2)
+        assert batch_1.available_quantity == 49
+        assert batch_2.available_quantity == 7
+
+    def test_available_stock_in_second_batch(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 1)
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 70)
+        batch_3 = Batch(BATCH_REF, "BLUE_VASE", 100)
+        order.allocate(batch_1, batch_2, batch_3)
+        assert batch_2.available_quantity == 60
+        assert batch_1.available_quantity == 1
+        assert batch_3.available_quantity == 100
+
+    def test_prefered_eta_in_first_batch(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 50, eta=datetime(2026, 8, 31, 15, 30, tzinfo=timezone.utc))
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 7)
+        order.allocate(batch_1, batch_2)
+        assert batch_1.available_quantity == 40
+        assert batch_2.available_quantity == 7
+
+    def test_prefered_eta_in_second_batch(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 40, eta=datetime(2026, 8, 31, 15, 30, tzinfo=timezone.utc))
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 40)
+        batch_3 = Batch(BATCH_REF, "BLUE_VASE", 100)
+        order.allocate(batch_1, batch_2, batch_3)
+        assert batch_1.available_quantity == 40
+        assert batch_2.available_quantity == 30
+        assert batch_3.available_quantity == 100
+
+    def test_prefered_eta_third_batch(self):
+        order = Order("refOrder", OrderLine(BLUE_VASE_SKU, 10))
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 40, eta=datetime(2026, 9, 29, 15, 30, tzinfo=timezone.utc))
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 4)
+        batch_3 = Batch(BATCH_REF, "BLUE_VASE", 100, eta=datetime(2026, 9, 29, 15, 00, tzinfo=timezone.utc))
+        order.allocate(batch_3, batch_1, batch_2)
+        assert batch_1.available_quantity == 40
+        assert batch_2.available_quantity == 4
+        assert batch_3.available_quantity == 90
 
 class TestBatchETA:
     def test_prefers_warehouse_batches_to_shipments(self):
         batch_eta = Batch(
             BATCH_REF,
             "RED_CHAIR",
-            4,
+            3,
             eta=datetime(2026, 8, 31, 15, 30, tzinfo=timezone.utc)
         )
         batch_warehouse = Batch(
             BATCH_REF,
             "RED_CHAIR",
-            5
+            3
         )
-        line = OrderLine(RED_CHAIR_SKU, 4)
+        line = OrderLine(RED_CHAIR_SKU, 2)
         order = Order("refOrder", line)
         order.allocate(batch_eta, batch_warehouse)
-        assert batch_eta.available_quantity == 4
+        assert batch_eta.available_quantity == 3
         assert batch_warehouse.available_quantity == 1
 
-    def test_prefers_earlier_batches(self):
+    def test_prefers_earllest_batches(self):
         batch_eta = Batch(
             BATCH_REF,
             "RED_CHAIR",
@@ -138,6 +213,7 @@ class TestBatchETA:
         )
         line = OrderLine(RED_CHAIR_SKU, 1)
         order = Order("refOrder", line)
+        
         order.allocate(batch_eta, batch_eta_earllest, batch_eta_earler)
         assert batch_eta.available_quantity == 5
         assert batch_eta_earler.available_quantity == 2

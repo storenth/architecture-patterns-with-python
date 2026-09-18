@@ -20,6 +20,9 @@ class NotAllocatedLineException(Exception):
    def __str__(self):
         return 'We can not deallocate not allocated line: {}'.format(self.order_line.sku)
 
+class OutOfStock(Exception):
+    pass
+
 
 class Product:
     sku: str
@@ -59,7 +62,7 @@ class Order:
             preferred_batch.allocate(self.order_line)
             return preferred_batch.ref
         except StopIteration:
-            raise NotAllocatedLineException(f"Out of stock {self.order_line}")
+            raise OutOfStock(f"OutOfStock: can't allocate {self.order_line=} because no Product found in batches {batches=}")
 
 
 class Batch:
@@ -77,7 +80,7 @@ class Batch:
     def __init__(self, ref:str, sku:str, quantity:int, eta:datetime|None=None):
         self.ref: str = ref
         self.eta = eta
-        logger.debug(f"{quantity=}")
+        logger.debug(f"Batch {quantity=}")
 
         self.sku = sku
         self.quantity = quantity        
@@ -89,8 +92,12 @@ class Batch:
 
     def __lt__(self, batch:"Batch"):
         logger.debug(f"{self.eta=}")
+        if self.eta is None and batch.eta is None:
+            return False
         if self.eta is None:
             return True
+        if batch.eta is None:
+            return False
         return self.eta < batch.eta
     
     @property
@@ -123,9 +130,10 @@ class Batch:
 
     def allocate(self, order_line: OrderLine):
         logger.debug("allocate...")
-        if not self.can_allocate(order_line): return None
-        if self.is_same_orderline(order_line):
-            raise SameOrderLineException(order_line)
+        if self.can_allocate(order_line):
+            if self.is_same_orderline(order_line):
+                raise SameOrderLineException(order_line)
+
         print(f"Allocating {order_line.sku}:{order_line.quantity} to batch {self.ref}: {self.quantity}")
         print(self._customer_order_lines_map)
 
