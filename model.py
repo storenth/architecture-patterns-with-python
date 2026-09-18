@@ -90,6 +90,14 @@ class Batch:
     def __repr__(self):
         return f"Batch(ref='{self.ref}', items={self.sku},{self.quantity}, ets={self.eta})"
 
+    def __eq__(self, other):
+        if not isinstance(other, self.__class__):
+            return False
+        return self.ref == other.ref
+
+    def __hash__(self):
+        return hash(self.ref)
+
     def __lt__(self, batch:"Batch"):
         logger.debug(f"{self.eta=}")
         if self.eta is None and batch.eta is None:

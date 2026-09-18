@@ -38,6 +38,16 @@ class TestOrderLine:
         assert order.order_line.quantity == 1
 
 class TestBatch:
+    def test_batch_identity_equality(self):
+        batch_1 = Batch(BATCH_REF, "RED_CHAIR", 2)
+        batch_2 = Batch(BATCH_REF, "RED_CHAIR", 1)
+        assert batch_1 == batch_2, "Not the same batches"
+
+    def test_batch_not_equal(self):
+        batch_1 = Batch(BATCH_REF, "RED_CHAIR", 2)
+        batch_2 = Batch("NOT_SAME_BATCH_REF", "RED_CHAIR", 1)
+        assert batch_1 != batch_2, "Not the same batches"
+
     def test_batch_has_orderline(self):
         batch = Batch(BATCH_REF, "RED_CHAIR", 2)
         print(batch)
