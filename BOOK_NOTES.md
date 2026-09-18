@@ -10,7 +10,7 @@ The goal of the domain modeling is to started with a model that has no external 
 3. Domain Driven Design combines design and development practice, and shows how design and development can work together to create a better solution.
 
 ## Repository, Service Layer, and Unit of Work patterns
-These three closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. We build a layer of abstraction around persistent storage, and we build a service layer to define the entrypoints to our system and capture the primary use cases.
+These three closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. We build a layer of abstraction around persistent storage, and we build a service layer to define the entrypoints to our system and capture the primary use cases (where use case start ed end).
 
 ### SOLID principles
 1. S - single responsibility: класс отвечает за конкретную работу (Square/Triangle/Circle, Output) и должна быть только одна причина для его изменения.
@@ -73,7 +73,7 @@ It answers the question: "how we can model business processes with code with TDD
 use a few _key architecture patterns_ for modeling domains: 
 1 Entity: identity equality, domain object that has long-lived identity
 2 Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
-3 Domain Service
+3 Domain Service: this is helper func, not belongs to entity or value object. Represents business concept or process whereas service-lauer represents a use case for your application. Often the service layer will call a domain service.
 
 Мы заменяем термин business layer на термин __domain model__!
 
