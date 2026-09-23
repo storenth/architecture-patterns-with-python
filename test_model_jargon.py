@@ -1,5 +1,5 @@
 import pytest
-from model import OrderLine, Order, Batch, OutOfStock, SameOrderLineException
+from model import OrderLine, Order, Batch, OutOfStock, SameOrderLineException, allocate
 from datetime import datetime, timezone
 import logging
 
@@ -117,6 +117,13 @@ class TestOutOfStock:
             order.allocate(batch)
         assert batch.available_quantity == 1
 
+    def test_outofstock_service(self):
+        order = OrderLine(BLUE_VASE_SKU, 10)
+        batch = Batch(BATCH_REF, "BLUE_VASE", 1)
+        with pytest.raises(OutOfStock):
+            allocate(order, batch)
+        assert batch.available_quantity == 1
+
     def test_outofstock_same_batch_order(self):
         order_first = Order("refOrder1", OrderLine(BLUE_VASE_SKU, 7))
         order_second = Order("refOrder2", OrderLine(BLUE_VASE_SKU, 10))
@@ -228,3 +235,11 @@ class TestBatchETA:
         assert batch_eta.available_quantity == 5
         assert batch_eta_earler.available_quantity == 2
         assert batch_eta_earllest.available_quantity == 1
+
+    def test_none_eta_service(self):
+        order = OrderLine(BLUE_VASE_SKU, 10)
+        batch_1 = Batch(BATCH_REF, "BLUE_VASE", 1)
+        batch_2 = Batch(BATCH_REF, "BLUE_VASE", 10)
+        allocate(order, batch_1, batch_2)
+        assert batch_1.available_quantity == 1
+        assert batch_2.available_quantity == 0
