@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-# custom exceptions
+# region custom exceptions
 class SameOrderLineException(Exception):
    def __init__(self, order_line: "OrderLine"):
        self.order_line = order_line
@@ -23,6 +23,7 @@ class NotAllocatedLineException(Exception):
 class OutOfStock(Exception):
     pass
 
+# endregion
 
 class Product:
     sku: str
@@ -32,6 +33,27 @@ class Product:
 class OrderLine:
     sku: str
     quantity: int
+
+
+# Domain Service functions region
+def allocate(order_line: OrderLine, *batches: "Batch"):
+    """Domain Service Functions
+    Verbs in our Domain becomes Functions
+
+    Сначала сортируематем по ETA, далее 
+    для каждого батча проверяем есть ли нужный quantity, и
+    выделяем из партии под конкретный заказ
+    """
+    logger.debug(f"{batches=}")
+    logger.debug(f"{sorted(batches)=}")
+    try:
+        preferred_batch = next(b for b in sorted(batches) if b.can_allocate(order_line))
+        preferred_batch.allocate(order_line)
+        return preferred_batch.ref
+    except StopIteration:
+        raise OutOfStock(f"OutOfStock: can't allocate {order_line=} because no Product found in batches {batches=}")
+
+# endregion
 
 class Order:
     """Client create order
