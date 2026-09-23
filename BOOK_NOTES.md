@@ -1,6 +1,5 @@
 # OOD, TDD, DDD, event-driven architecture
 
-
 ## Domain modeling and DDD (Building an Architecture to Support Domain Modeling)
 The goal of the domain modeling is to started with a model that has no external dependencies, but has fast unit tests. We can keep the domain model easy to change and free of low-level concerns by choosing the right abstractions and continuously applying the DIP.
 
@@ -9,8 +8,8 @@ The goal of the domain modeling is to started with a model that has no external 
 2. DDD is about building a good model of business domain / Event-driven to manage complexity about business domain.
 3. Domain Driven Design combines design and development practice, and shows how design and development can work together to create a better solution.
 
-## Repository, Service Layer, and Unit of Work patterns
-These three closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. We build a layer of abstraction around persistent storage, and we build a service layer to define the entrypoints to our system and capture the primary use cases (where use case start ed end).
+### Validation
+Validation is about the preconditions: syntax, semantics, and pragmatics!
 
 ### SOLID principles
 1. S - single responsibility: класс отвечает за конкретную работу (Square/Triangle/Circle, Output) и должна быть только одна причина для его изменения.
@@ -19,8 +18,23 @@ These three closely related and mutually reinforcing patterns that support our a
 4. I - interface segregation: нет необходимости в доп полях/методах для клиента если он ими не пользуется (пульт с кнопками только для ТВ, только кондиционера и т/д)
 5. D - dependency inversion: зависимости должны строиться на абстракциях, а не на конкретных реализациях (хороший пример разделения на слои web/service/DB) см [DIP](#dependency-inversion-principle-dip)
 
+## Part I. Building an Architecture to Support Domain Modeling
+These three closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. We build a layer of abstraction around persistent storage, and we build a service layer to define the entrypoints to our system and capture the primary use cases (where use case start ed end).
 
-## Event-Driven architecture
+### Key design patterns
+These closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. 
+OOD principles are the foundation for the repository and service layer patterns, which are specific architectural patterns used to organize object-oriented systems and enforce key design principles.
+
+Four _key design patterns_ helps us to build a rich object model with persistence-ignorant code and to keep that model decoupled from technical concerns:
+
+- Repository pattern - a layer of abstraction around persistent storage
+- Service layer pattern - the entrypoints to our system, whether it’s a Flask/Fastapi API or a CLI. Also define use cases: where it begins and ends.
+- Unit of Work pattern - обеспечивает атомарность ?операцям?
+- The Aggregate pattern - ?обеспечение целостности данных? A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
+![component-diagram](./component-diagram-part-1.png)
+
+
+## Part II. Event-Driven architecture
 Solution to solve временную связность problem.
 three more mutually reinforcing patterns: the Domain Events, Message Bus, and Handler patterns:
 - Domain Events pattern - interactions with a system triggers for other interactions
@@ -52,20 +66,6 @@ duckduckgo инкапсулировал API поисковой машины).
 ### Domain Model pattern - место для всей бизнес логики
 Решает проблему с тем что бизнес логика (Service/Business layer) разбросана по другим слоям.
 Следовательно нужно создавать этот т/н middle layer используя Domain Model pattern.
-
-### patterns
-These closely related and mutually reinforcing patterns that support our ambition to keep the model free of extraneous dependencies. 
-OOD principles are the foundation for the repository and service layer patterns, which are specific architectural patterns used to organize object-oriented systems and enforce key design principles.
-
-Four _key design patterns_ helps us to build a rich object model with persistence-ignorant code and to keep that model decoupled from technical concerns:
-
-- Repository pattern - a layer of abstraction around persistent storage
-- Service layer pattern - the entrypoints to our system, whether it’s a Flask/Fastapi API or a CLI. Also define use cases: where it begins and ends.
-- Unit of Work pattern - обеспечивает атомарность ?операцям?
-- The Aggregate pattern - ?обеспечение целостности данных? A DDD aggregate is a cluster of domain objects that can be treated as a single unit.
-
-![component-diagram](./component-diagram-part-1.png)
-
 
 # Domain Modeling
 It answers the question: "how we can model business processes with code with TDD compatible way"?
@@ -162,6 +162,4 @@ class Batch:
         return hash(self.reference)
 ```
 
-3. A Domain Service represents a business concept or process, whereas a service-layer service represents a use case for your application. Given set of batches, we need to allocate OrderLine from it!
-
-Validation is about the preconditions: syntax, semantics, and pragmatics!
+3. A Domain Service represents a business concept or process, whereas a service-layer service represents a use case for your application. Given set of batches, we need to allocate OrderLine from it! Just use Functions as we use Verbs in business speak.
