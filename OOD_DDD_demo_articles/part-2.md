@@ -18,4 +18,4 @@ So we can create an interface to follow the DIP statement to encapsulate and iso
 
 
 
-This simple example shows us how applying the DIP drive Layered architecture pattern (three-tier-model) on different point of view: inside layers and between layers. Now we need to focused on service/business/middle layer because is the most valuable part of the app, and in the next parts I will write how to build a business layer with a Domain Model pattern to keep it free of low level details and dependencies.
+This simple example shows us how applying the DIP drive Layered architecture pattern (three-tier-model) on different point of view: inside layers and between layers. Now we need to focused on service (or business/middle) layer because is the most valuable part of the app, and in the next parts I will write how to build a business layer with a Domain Model pattern to keep it free of low level details and dependencies.
