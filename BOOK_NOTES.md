@@ -75,7 +75,9 @@ use a few _key architecture patterns_ for modeling domains:
 2 Value Object: value equality, domain object that can be idintified by its data itself, that has no long-livedidentity/UUID.
 3 Domain Service: this is helper func, not belongs to entity or value object. Represents business concept or process whereas service-lauer represents a use case for your application. Often the service layer will call a domain service.
 
-Мы заменяем термин business layer на термин __domain model__!
+Мы заменяем термин __business layer__ на термин __domain model__! Потому что: 
+Domain modeling - is the part of your code that is closest to the business, the most likely to change, and the
+place where you deliver the most value to the business. Make it easy to understand and modify.
 
 Бизнес говорит на языке сленга и жаргона принятого в отрасли - использует специфичные термины. Термины и жаргоны возникают естественным образом так как это способ описать сложную систему или процесс в одно-два слова или предложения в рамках бизнес-процесса.
 
